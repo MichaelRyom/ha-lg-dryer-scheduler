@@ -1,4 +1,4 @@
-# Dryer Scheduler — LG ThinQ Connect HA integration
+# LG Dryer Scheduler — LG ThinQ Connect HA integration
 
 Home Assistant custom integration that schedules an LG dryer to finish (or start) at a specific time using LG's **official ThinQ Connect API**. Built because the unofficial `smartthinq_sensors` integration's `wake_up` + `button.press` flow is unreliable and LG has hard-blocked the unofficial API for many accounts.
 
@@ -11,8 +11,8 @@ The dryer runs on its **own internal clock** once the timer is set — no WiFi o
 - Sensors for run state, operation mode, remaining time, total time, time until start/end
 - Binary sensors for `online` and `remote_control_enabled`
 - Two services for scheduling:
-  - `dryer_scheduler.delay_end` — finish in N hours
-  - `dryer_scheduler.delay_start` — start in N hours (model-dependent)
+  - `lg_dryer_scheduler.delay_end` — finish in N hours
+  - `lg_dryer_scheduler.delay_start` — start in N hours (model-dependent)
 - Polls every 30s
 
 ## Why this exists
@@ -35,13 +35,13 @@ The official `lg_thinq` integration in HA core does not expose the delay timer a
 
 1. HACS → 3-dot menu → **Custom repositories**
 2. Add this repo URL, category: **Integration**
-3. Install **Dryer Scheduler**
+3. Install **LG Dryer Scheduler**
 4. Restart HA
 
 ### 3. Add the integration
 
 1. **Settings → Devices & Services → Add Integration**
-2. Search for **Dryer Scheduler**
+2. Search for **LG Dryer Scheduler**
 3. Paste your PAT, set country code (e.g. `DK`), leave client_id blank
 4. Pick your dryer from the list
 
@@ -53,10 +53,10 @@ The integration immediately fetches the device profile and configures itself bas
 
 After loading the dryer and pressing **Remote Start** physically on the dryer:
 
-**Developer Tools → Actions** → `dryer_scheduler.delay_end`:
+**Developer Tools → Actions** → `lg_dryer_scheduler.delay_end`:
 
 ```yaml
-service: dryer_scheduler.delay_end
+service: lg_dryer_scheduler.delay_end
 data:
   hours: 8
 ```
@@ -73,7 +73,7 @@ automation:
         entity_id: binary_sensor.torretumbler_remote_control_enabled
         to: "on"
     action:
-      - service: dryer_scheduler.delay_end
+      - service: lg_dryer_scheduler.delay_end
         data:
           # compute hours from your cheap-window logic
           hours: >

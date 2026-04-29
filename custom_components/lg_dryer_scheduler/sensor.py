@@ -1,4 +1,4 @@
-"""Sensor entities for Dryer Scheduler."""
+"""Sensor entities for LG Dryer Scheduler."""
 
 from __future__ import annotations
 

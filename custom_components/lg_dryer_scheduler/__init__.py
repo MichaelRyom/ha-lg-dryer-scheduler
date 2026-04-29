@@ -1,4 +1,4 @@
-"""Dryer Scheduler integration."""
+"""LG Dryer Scheduler integration."""
 
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ PLATFORMS = [Platform.SENSOR, Platform.BUTTON, Platform.BINARY_SENSOR]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up Dryer Scheduler from a config entry."""
+    """Set up LG Dryer Scheduler from a config entry."""
     data = entry.data
     coordinator = DryerCoordinator(
         hass,

@@ -1,6 +1,6 @@
-"""Constants for the Dryer Scheduler integration."""
+"""Constants for the LG Dryer Scheduler integration."""
 
-DOMAIN = "dryer_scheduler"
+DOMAIN = "lg_dryer_scheduler"
 
 CONF_PAT = "pat"
 CONF_COUNTRY_CODE = "country_code"

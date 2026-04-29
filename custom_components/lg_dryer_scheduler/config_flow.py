@@ -18,7 +18,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class DryerSchedulerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Dryer Scheduler."""
+    """Handle a config flow for LG Dryer Scheduler."""
 
     VERSION = 1
 
