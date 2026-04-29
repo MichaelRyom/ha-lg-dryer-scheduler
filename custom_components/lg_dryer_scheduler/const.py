@@ -19,6 +19,8 @@ OP_WAKE_UP = "WAKE_UP"
 # Service names
 SERVICE_DELAY_END = "delay_end"
 SERVICE_DELAY_START = "delay_start"
+SERVICE_REFRESH = "refresh"
+SERVICE_GET_ENERGY_USAGE = "get_energy_usage"
 
 # Capability flags exposed via coordinator data
 CAP_DELAY_END = "delay_end"

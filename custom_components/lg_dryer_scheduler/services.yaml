@@ -67,3 +67,54 @@ delay_start:
           max: 59
           mode: box
           unit_of_measurement: minutes
+
+refresh:
+  name: Refresh
+  description: Force the integration to poll the dryer immediately.
+  fields:
+    entity_id:
+      name: Target entity
+      description: Any entity from the target dryer (only needed if multiple dryers configured)
+      selector:
+        text:
+
+get_energy_usage:
+  name: Get energy usage
+  description: >
+    Fetch energy usage from the LG ThinQ Connect API for a given date range.
+    Returns response data; use response_variable in your script/automation.
+  fields:
+    entity_id:
+      name: Target entity
+      selector:
+        text:
+    start_date:
+      name: Start date
+      description: ISO date YYYY-MM-DD
+      required: true
+      example: "2026-04-01"
+      selector:
+        text:
+    end_date:
+      name: End date
+      description: ISO date YYYY-MM-DD
+      required: true
+      example: "2026-04-29"
+      selector:
+        text:
+    period:
+      name: Period
+      description: Aggregation level
+      default: DAY
+      selector:
+        select:
+          options:
+            - DAY
+            - MONTH
+            - YEAR
+    energy_property:
+      name: Energy property
+      description: Property name (defaults to totalEnergy)
+      default: totalEnergy
+      selector:
+        text:

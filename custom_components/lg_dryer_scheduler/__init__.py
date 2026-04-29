@@ -8,7 +8,7 @@ import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.core import HomeAssistant, ServiceCall, SupportsResponse
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv
 
@@ -26,6 +26,8 @@ from .const import (
     DOMAIN,
     SERVICE_DELAY_END,
     SERVICE_DELAY_START,
+    SERVICE_GET_ENERGY_USAGE,
+    SERVICE_REFRESH,
 )
 from .coordinator import DryerCoordinator
 
@@ -131,7 +133,7 @@ def _register_services(hass: HomeAssistant) -> None:
             minutes = 0
         await coord.async_set_delay_start(hours=hours, minutes=minutes)
 
-    schema = vol.Schema(
+    delay_schema = vol.Schema(
         {
             vol.Optional("entity_id"): cv.string,
             vol.Required("hours"): vol.All(vol.Coerce(int), vol.Range(min=0, max=24)),
@@ -140,5 +142,49 @@ def _register_services(hass: HomeAssistant) -> None:
             ),
         }
     )
-    hass.services.async_register(DOMAIN, SERVICE_DELAY_END, _handle_delay_end, schema=schema)
-    hass.services.async_register(DOMAIN, SERVICE_DELAY_START, _handle_delay_start, schema=schema)
+    hass.services.async_register(
+        DOMAIN, SERVICE_DELAY_END, _handle_delay_end, schema=delay_schema
+    )
+    hass.services.async_register(
+        DOMAIN, SERVICE_DELAY_START, _handle_delay_start, schema=delay_schema
+    )
+
+    async def _handle_refresh(call: ServiceCall) -> None:
+        coord = _resolve_target(hass, call)
+        await coord.async_request_refresh()
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_REFRESH,
+        _handle_refresh,
+        schema=vol.Schema({vol.Optional("entity_id"): cv.string}),
+    )
+
+    async def _handle_get_energy_usage(call: ServiceCall) -> dict:
+        coord = _resolve_target(hass, call)
+        try:
+            data = await coord.async_get_energy_usage(
+                start=str(call.data["start_date"]),
+                end=str(call.data["end_date"]),
+                period=call.data.get("period", "DAY"),
+                energy_property=call.data.get("energy_property", "totalEnergy"),
+            )
+        except Exception as exc:  # pylint: disable=broad-except
+            raise HomeAssistantError(f"Energy usage fetch failed: {exc}") from exc
+        return {"data": data}
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_GET_ENERGY_USAGE,
+        _handle_get_energy_usage,
+        schema=vol.Schema(
+            {
+                vol.Optional("entity_id"): cv.string,
+                vol.Required("start_date"): cv.string,
+                vol.Required("end_date"): cv.string,
+                vol.Optional("period", default="DAY"): vol.In(["DAY", "MONTH", "YEAR"]),
+                vol.Optional("energy_property", default="totalEnergy"): cv.string,
+            }
+        ),
+        supports_response=SupportsResponse.ONLY,
+    )
