@@ -1,0 +1,127 @@
+# Dashboard for the LG Dryer Scheduler integration.
+# Paste into Raw Configuration Editor of a new (empty) dashboard.
+# Replace `torretumbler` with your dryer's entity prefix.
+
+views:
+  - title: Tørretumbler
+    path: dryer
+    cards:
+      - type: vertical-stack
+        cards:
+          - type: heading
+            heading: Tørretumbler
+            heading_style: title
+            icon: mdi:tumble-dryer
+
+          - type: markdown
+            content: |
+              {% set state = states('sensor.torretumbler_run_state') %}
+              {% set online = is_state('binary_sensor.torretumbler_online', 'on') %}
+              {% if not online %}
+              **Status:** Offline
+              {% elif state == 'RESERVED' %}
+              **Status:** Planlagt
+              {% elif state == 'RUNNING' %}
+              **Status:** Kører ({{ states('sensor.torretumbler_cycle_progress') }}%)
+              {% elif state == 'INITIAL' %}
+              **Status:** Klar — vent på Remote Start
+              {% elif state == 'SLEEP' %}
+              **Status:** Sover
+              {% elif state == 'POWER_OFF' %}
+              **Status:** Slukket
+              {% elif state == 'END' %}
+              **Status:** Færdig
+              {% else %}
+              **Status:** {{ state }}
+              {% endif %}
+
+          - type: conditional
+            conditions:
+              - entity: sensor.torretumbler_run_state
+                state: RESERVED
+            card:
+              type: entities
+              title: Planlagt kørsel
+              entities:
+                - entity: sensor.torretumbler_estimated_start
+                  name: Starter
+                  format: datetime
+                - entity: sensor.torretumbler_estimated_finish
+                  name: Færdig
+                  format: datetime
+                - entity: sensor.torretumbler_time_until_end
+                  name: Tid til slut
+                - entity: sensor.torretumbler_cycle_total
+                  name: Program
+
+          - type: conditional
+            conditions:
+              - entity: sensor.torretumbler_run_state
+                state: RUNNING
+            card:
+              type: vertical-stack
+              cards:
+                - type: gauge
+                  entity: sensor.torretumbler_cycle_progress
+                  name: Fremskridt
+                  min: 0
+                  max: 100
+                  severity:
+                    green: 75
+                    yellow: 30
+                    red: 0
+                - type: entities
+                  entities:
+                    - entity: sensor.torretumbler_time_remaining
+                      name: Tid tilbage
+                    - entity: sensor.torretumbler_estimated_finish
+                      name: Færdig
+                      format: datetime
+                    - entity: sensor.torretumbler_last_cycle_started
+                      name: Startede
+                      format: relative
+
+          - type: conditional
+            conditions:
+              - entity: sensor.torretumbler_run_state
+                state_not: RUNNING
+              - entity: sensor.torretumbler_run_state
+                state_not: RESERVED
+              - entity: sensor.torretumbler_last_cycle_finished
+                state_not: unknown
+              - entity: sensor.torretumbler_last_cycle_finished
+                state_not: unavailable
+            card:
+              type: entities
+              title: Sidste kørsel
+              entities:
+                - entity: sensor.torretumbler_last_cycle_started
+                  name: Startede
+                  format: datetime
+                - entity: sensor.torretumbler_last_cycle_finished
+                  name: Sluttede
+                  format: datetime
+
+          - type: entities
+            title: Knapper
+            entities:
+              - entity: button.torretumbler_start
+                name: Start nu
+              - entity: button.torretumbler_stop
+                name: Stop
+              - entity: button.torretumbler_wake_up
+                name: Vågn op
+              - entity: button.torretumbler_power_off
+                name: Sluk
+
+          - type: entities
+            title: Diagnostik
+            entities:
+              - entity: binary_sensor.torretumbler_online
+                name: Online
+              - entity: binary_sensor.torretumbler_remote_control_enabled
+                name: Remote control
+              - entity: sensor.torretumbler_run_state
+                name: Run state
+              - entity: sensor.torretumbler_diagnostics
+                name: Diagnostics

@@ -1,0 +1,90 @@
+# Automation that schedules the dryer to finish in the cheapest electricity window.
+#
+# Requires the Energi Data Service integration (or replace the price source).
+# Triggers when the user physically presses Remote Start on the dryer.
+# Reads program length from sensor.{alias}_cycle_total (falls back to 3 hours).
+# Finds the cheapest N-hour window in the next 19 hours and calls
+# lg_dryer_scheduler.delay_end with the appropriate hours-until-finish.
+#
+# Replace `torretumbler` with your dryer's entity prefix.
+
+alias: "Tørretumbler - Schedule for cheapest electricity"
+description: "Sets delay-end so the program finishes in the cheapest window"
+trigger:
+  - platform: state
+    entity_id: binary_sensor.torretumbler_remote_control_enabled
+    to: "on"
+action:
+  - delay: "00:00:15"  # Wait for the dryer to report cycle_total
+  - variables:
+      program_minutes: >
+        {% set t = state_attr('sensor.torretumbler_cycle_total', 'total_minutes') | int(0) %}
+        {{ t if t > 0 else 180 }}
+      program_hours: "{{ (program_minutes / 60) | round(0, 'ceil') | int }}"
+      delay_end_hours: >
+        {% set program = program_hours | int %}
+        {% set today = state_attr('sensor.energi_data_service', 'raw_today') or [] %}
+        {% set tomorrow = state_attr('sensor.energi_data_service', 'raw_tomorrow') or [] %}
+        {% set data = today + tomorrow %}
+        {% set now_dt = now() %}
+        {% set horizon = now_dt + timedelta(hours=19) %}
+        {% set ns = namespace(rows=[], best_end=none, best_total=none) %}
+        {% for p in data %}
+          {% if p['hour'] >= now_dt and p['hour'] <= horizon %}
+            {% set ns.rows = ns.rows + [p] %}
+          {% endif %}
+        {% endfor %}
+        {% set max_slots = ns.rows | length %}
+        {% if program <= max_slots %}
+          {% for i in range(max_slots - program + 1) %}
+            {% set win = ns.rows[i:i+program] %}
+            {% set total = win | map(attribute='price') | sum %}
+            {% set window_end = win[-1]['hour'] + timedelta(hours=1) %}
+            {% if ns.best_total is none or total < ns.best_total %}
+              {% set ns.best_end = window_end %}
+              {% set ns.best_total = total %}
+            {% endif %}
+          {% endfor %}
+          {% if ns.best_end is not none %}
+            {% set h = ((ns.best_end - now_dt).total_seconds() / 3600) | round(0, 'ceil') | int %}
+            {{ [3, [h, 19] | min] | max }}
+          {% else %}
+            3
+          {% endif %}
+        {% else %}
+          3
+        {% endif %}
+      estimated_cost: >
+        {% set program = program_hours | int %}
+        {% set today = state_attr('sensor.energi_data_service', 'raw_today') or [] %}
+        {% set tomorrow = state_attr('sensor.energi_data_service', 'raw_tomorrow') or [] %}
+        {% set data = today + tomorrow %}
+        {% set now_dt = now() %}
+        {% set horizon = now_dt + timedelta(hours=19) %}
+        {% set ns = namespace(rows=[], best=none) %}
+        {% for p in data %}
+          {% if p['hour'] >= now_dt and p['hour'] <= horizon %}
+            {% set ns.rows = ns.rows + [p] %}
+          {% endif %}
+        {% endfor %}
+        {% if program <= ns.rows | length %}
+          {% for i in range(ns.rows | length - program + 1) %}
+            {% set total = ns.rows[i:i+program] | map(attribute='price') | sum %}
+            {% if ns.best is none or total < ns.best %}
+              {% set ns.best = total %}
+            {% endif %}
+          {% endfor %}
+          {{ '%.3f' | format(ns.best) if ns.best is not none else '?' }}
+        {% else %}
+          ?
+        {% endif %}
+  - service: lg_dryer_scheduler.delay_end
+    data:
+      hours: "{{ delay_end_hours | int }}"
+  - service: persistent_notification.create
+    data:
+      title: "Tørretumbler planlagt"
+      message: >
+        Færdig om {{ delay_end_hours }} timer
+        ({{ (now() + timedelta(hours=delay_end_hours|int)) | as_local | string }}).
+        Program: {{ program_hours }}t. Est. pris: {{ estimated_cost }} kr.
