@@ -1,0 +1,69 @@
+delay_end:
+  name: Delay end
+  description: >
+    Tell the dryer to be done in N hours. The dryer computes its own start time
+    based on the selected program length and counts down on its own clock —
+    no WiFi needed during the wait. Only available on dryers whose profile
+    exposes relativeHourToStop as writable.
+  fields:
+    entity_id:
+      name: Target entity
+      description: Any entity from the target dryer (only needed if multiple dryers configured)
+      example: sensor.torretumbler_run_state
+      selector:
+        text:
+    hours:
+      name: Hours until program ends
+      description: How many hours from now the program should be done. Range depends on the dryer (typically 3-19).
+      required: true
+      example: 8
+      selector:
+        number:
+          min: 0
+          max: 24
+          mode: box
+          unit_of_measurement: hours
+    minutes:
+      name: Minutes until program ends
+      description: Additional minutes (only effective if the dryer's profile says relativeMinuteToStop is writable; otherwise ignored).
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 59
+          mode: box
+          unit_of_measurement: minutes
+
+delay_start:
+  name: Delay start
+  description: >
+    Tell the dryer to start in N hours. Only available on dryers whose profile
+    exposes relativeHourToStart as writable. If your dryer only exposes delay-end,
+    use the delay_end service instead.
+  fields:
+    entity_id:
+      name: Target entity
+      description: Any entity from the target dryer (only needed if multiple dryers configured)
+      example: sensor.torretumbler_run_state
+      selector:
+        text:
+    hours:
+      name: Hours until start
+      description: How many hours from now the program should start.
+      required: true
+      example: 5
+      selector:
+        number:
+          min: 0
+          max: 24
+          mode: box
+          unit_of_measurement: hours
+    minutes:
+      name: Minutes until start
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 59
+          mode: box
+          unit_of_measurement: minutes

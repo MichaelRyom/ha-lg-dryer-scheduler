@@ -1,0 +1,38 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "LG ThinQ Dryer",
+        "description": "Generate a Personal Access Token at https://connect-pat.lgthinq.com and paste it below. Country code uses 2-letter ISO format (e.g. DK, DE, US). The client_id is auto-generated if left blank.",
+        "data": {
+          "pat": "Personal Access Token",
+          "country_code": "Country code",
+          "client_id": "Client ID (optional UUID)"
+        }
+      },
+      "select_device": {
+        "title": "Pick a dryer",
+        "data": {
+          "device_id": "Dryer"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to LG ThinQ. Check your PAT and country code.",
+      "no_dryer_found": "No washer/dryer devices found on the account."
+    },
+    "abort": {
+      "already_configured": "This dryer is already configured."
+    }
+  },
+  "services": {
+    "delay_end": {
+      "name": "Delay end",
+      "description": "Tell the dryer to be done in N hours."
+    },
+    "delay_start": {
+      "name": "Delay start",
+      "description": "Tell the dryer to start in N hours (model-dependent)."
+    }
+  }
+}
